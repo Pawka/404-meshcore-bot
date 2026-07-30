@@ -1,0 +1,5 @@
+meshcore
+click
+python-escpos
+pyusb
+PyYAML
