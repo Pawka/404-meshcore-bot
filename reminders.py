@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from bot import BotContext
 from config import RemindersConfig
+from printer_worker import PrintJob, PrintJobKind
 
 if TYPE_CHECKING:
     from meshcore_client import MeshcoreClient
@@ -61,11 +62,13 @@ def format_reminder(p: Presentation) -> str:
 
 
 class ReminderFeature:
-    def __init__(self, cfg: RemindersConfig) -> None:
+    def __init__(self, cfg: RemindersConfig, queue: "asyncio.Queue[PrintJob]") -> None:
         self.cfg = cfg
+        self.queue = queue
         self._presentations: list[Presentation] = []
         self._last_good_mtime: float | None = None
         self._sent: dict[str, datetime] = {}  # key -> event datetime, in-memory only
+        self._printed: dict[str, datetime] = {}  # key -> event datetime, in-memory only
 
     async def run(self, ctx: BotContext) -> None:
         if not self.cfg.enabled:
@@ -95,10 +98,16 @@ class ReminderFeature:
     async def _send_due(self, meshcore_client: "MeshcoreClient") -> None:
         now = datetime.now()
         for p in self._presentations:
-            if p.key() in self._sent:
-                continue
             reminder_at = p.when - timedelta(minutes=self.cfg.offset_minutes)
-            if now < reminder_at or now >= p.when:
+            due = reminder_at <= now < p.when
+
+            if due and p.key() not in self._printed:
+                self.queue.put_nowait(
+                    PrintJob(kind=PrintJobKind.ANNOUNCEMENT, text=format_reminder(p))
+                )
+                self._printed[p.key()] = p.when
+
+            if not due or p.key() in self._sent:
                 continue
             ok = await meshcore_client.send_channel_message(
                 self.cfg.channel, format_reminder(p)
@@ -109,3 +118,4 @@ class ReminderFeature:
     def _prune_sent(self) -> None:
         cutoff = datetime.now() - timedelta(days=1)
         self._sent = {k: v for k, v in self._sent.items() if v >= cutoff}
+        self._printed = {k: v for k, v in self._printed.items() if v >= cutoff}

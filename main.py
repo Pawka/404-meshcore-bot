@@ -83,7 +83,7 @@ async def async_main(cfg: config_module.Config) -> None:
     periodic = PeriodicJobs(cfg.periodic, queue)
     schedule_sync = ScheduleSyncJob(cfg.schedule_sync, cfg.reminders.csv_path)
 
-    features: list[BotFeature] = [ReminderFeature(cfg.reminders)]
+    features: list[BotFeature] = [ReminderFeature(cfg.reminders, queue)]
     bot = Bot(BotContext(meshcore_client, cfg), features)
 
     await asyncio.gather(
