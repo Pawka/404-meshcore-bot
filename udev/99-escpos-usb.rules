@@ -1,0 +1,11 @@
+# Epson TM-T20II (and compatible ESC/POS USB printers) enumerate as a USB
+# Printer-class device, so the distro's default printer udev rule assigns
+# the device node to root:lp mode 0660. Non-lp users can then read the
+# descriptor but fail to open the device read-write, which python-escpos
+# surfaces as escpos.exceptions.DeviceNotFoundError ("cable not plugged
+# in") even though the printer is connected - this rule grants the
+# `plugdev` group direct access instead of requiring `lp` membership.
+#
+# Install: sudo cp udev/99-escpos-usb.rules /etc/udev/rules.d/
+#          sudo udevadm control --reload-rules && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTR{idVendor}=="04b8", ATTR{idProduct}=="0e15", MODE="0660", GROUP="plugdev"

@@ -79,10 +79,11 @@ class PrinterWorker:
                 # printer is missing (construction always "succeeds").
                 await asyncio.to_thread(printer.open)
                 return printer
-            except escpos_exceptions.DeviceNotFoundError:
+            except escpos_exceptions.DeviceNotFoundError as e:
                 logger.warning(
-                    "Printer not found, retrying in %ss",
+                    "Printer not found, retrying in %ss: %s",
                     self.printer_cfg.retry_interval_seconds,
+                    e,
                 )
                 await asyncio.sleep(self.printer_cfg.retry_interval_seconds)
 

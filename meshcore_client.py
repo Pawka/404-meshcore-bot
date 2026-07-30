@@ -33,6 +33,10 @@ class MeshcoreClient:
         while True:
             mc = await self._connect()
             if mc is None:
+                logger.warning(
+                    "Meshcore companion not found, retrying in %ss",
+                    self.cfg.retry_interval_seconds,
+                )
                 await asyncio.sleep(self.cfg.retry_interval_seconds)
                 continue
 
@@ -68,7 +72,7 @@ class MeshcoreClient:
                     timeout=self.cfg.probe_timeout_seconds + 2,
                 )
             except Exception as e:
-                logger.debug("Probe %s failed: %s", port, e)
+                logger.warning("Probe %s failed: %s", port, e)
                 continue
             if mc is not None:
                 logger.info("Meshcore companion found on %s", port)

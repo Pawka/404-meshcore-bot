@@ -45,7 +45,7 @@ def pad_blank(printer, count: int) -> None:
 def print_banner(printer, banner_cfg: BannerConfig, fmt_cfg: FormattingConfig) -> None:
     pad_blank(printer, fmt_cfg.blank_lines_before)
 
-    printer.set(align="center", font=NORMAL_FONT, bold=True, custom_size=True, height=2, width=2)
+    printer.set(align="center", font=NORMAL_FONT, bold=True, custom_size=True, height=8, width=8)
     printer.text(banner_cfg.title + "\n")
 
     set_normal(printer, align="center", bold=True, font=NORMAL_FONT)
