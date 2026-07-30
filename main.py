@@ -56,9 +56,16 @@ def init(config_path: str, force: bool) -> None:
     type=click.Path(exists=True),
 )
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug logging.")
-def run(config_path: str, verbose: bool) -> None:
+@click.option(
+    "--no-schedule-download",
+    is_flag=True,
+    help="Disable periodic downloading of the schedule CSV, regardless of config.yaml.",
+)
+def run(config_path: str, verbose: bool, no_schedule_download: bool) -> None:
     """Run the Meshcore-to-printer bridge."""
     cfg = config_module.load_config(config_path)
+    if no_schedule_download:
+        cfg.schedule_sync.enabled = False
     level = logging.DEBUG if verbose else getattr(logging, cfg.log_level.upper(), logging.INFO)
     logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
