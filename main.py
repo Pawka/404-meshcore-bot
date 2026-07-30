@@ -14,6 +14,7 @@ from meshcore_client import MeshcoreClient
 from periodic import PeriodicJobs
 from printer_worker import PrintJob, PrinterWorker
 from reminders import ReminderFeature
+from schedule_sync import ScheduleSyncJob
 
 
 @click.group()
@@ -73,6 +74,7 @@ async def async_main(cfg: config_module.Config) -> None:
     printer_worker = PrinterWorker(cfg.printer, cfg.banner, cfg.formatting, queue)
     meshcore_client = MeshcoreClient(cfg.meshcore, cfg.filters, queue)
     periodic = PeriodicJobs(cfg.periodic, queue)
+    schedule_sync = ScheduleSyncJob(cfg.schedule_sync, cfg.reminders.csv_path)
 
     features: list[BotFeature] = [ReminderFeature(cfg.reminders)]
     bot = Bot(BotContext(meshcore_client, cfg), features)
@@ -81,6 +83,7 @@ async def async_main(cfg: config_module.Config) -> None:
         printer_worker.run(),
         meshcore_client.run(),
         periodic.run(),
+        schedule_sync.run(),
         bot.run(),
     )
 

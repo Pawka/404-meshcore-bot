@@ -60,6 +60,12 @@ reminders:
   offset_minutes: 10                # how long before the presentation to remind
   poll_interval_seconds: 30         # how often to check the CSV for changes / send due reminders
 
+schedule_sync:
+  enabled: true                             # download presentations.csv on a timer
+  url: "https://404.notrollsallowed.com/schedule.csv"
+  interval_minutes: 60                      # how often to (re)download
+  timeout_seconds: 10                       # per-attempt network timeout; failures are logged and skipped
+
 log_level: "INFO"
 """
 
@@ -143,6 +149,14 @@ class RemindersConfig:
 
 
 @dataclass
+class ScheduleSyncConfig:
+    enabled: bool = True
+    url: str = "https://404.notrollsallowed.com/schedule.csv"
+    interval_minutes: int = 60
+    timeout_seconds: int = 10
+
+
+@dataclass
 class Config:
     printer: PrinterConfig = field(default_factory=PrinterConfig)
     meshcore: MeshcoreConfig = field(default_factory=MeshcoreConfig)
@@ -151,6 +165,7 @@ class Config:
     banner: BannerConfig = field(default_factory=BannerConfig)
     formatting: FormattingConfig = field(default_factory=FormattingConfig)
     reminders: RemindersConfig = field(default_factory=RemindersConfig)
+    schedule_sync: ScheduleSyncConfig = field(default_factory=ScheduleSyncConfig)
     log_level: str = "INFO"
 
 
@@ -250,6 +265,18 @@ def load_config(path: str) -> Config:
         ),
     )
 
+    schedule_sync_raw = raw.get("schedule_sync", {}) or {}
+    schedule_sync = ScheduleSyncConfig(
+        enabled=schedule_sync_raw.get("enabled", ScheduleSyncConfig.enabled),
+        url=schedule_sync_raw.get("url", ScheduleSyncConfig.url),
+        interval_minutes=schedule_sync_raw.get(
+            "interval_minutes", ScheduleSyncConfig.interval_minutes
+        ),
+        timeout_seconds=schedule_sync_raw.get(
+            "timeout_seconds", ScheduleSyncConfig.timeout_seconds
+        ),
+    )
+
     return Config(
         printer=printer,
         meshcore=meshcore,
@@ -258,5 +285,6 @@ def load_config(path: str) -> Config:
         banner=banner,
         formatting=formatting,
         reminders=reminders,
+        schedule_sync=schedule_sync,
         log_level=raw.get("log_level", "INFO"),
     )
